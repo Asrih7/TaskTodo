@@ -1,0 +1,94 @@
+
+
+.container-fluid{
+    background-color: #f2f2f2;
+    min-height: 600px;;
+  
+  
+  }
+  #ttcTitle{
+   
+    margin-bottom: -5px;
+    margin-top: 16px;
+    color: #24BFEB;
+   
+    
+  }
+  
+  #title{
+    text-align: center;
+    background-color: #24BFEB;
+    color: white;
+    border-radius: 5px;
+    font-family: 'Philosopher', sans-serif;
+  
+  }
+  #inputTask{
+    height: 50px;
+    font-family: 'Philosopher', sans-serif;
+  }
+  
+  #task{
+      background-color:white;
+      margin-top: 10px;
+      padding: 20px;
+      min-height: 500px;
+  
+  }
+  .dateTime{
+    font-family: 'Philosopher', sans-serif;
+    color: white;
+    
+  }
+  .ctrlButtons{
+    float: right;
+    margin-top:10px;
+  }
+  #errMessage{
+    color: red;
+      
+      display: block;
+     
+      font-family: "Domine", serif;
+      padding: 8px;
+    
+  }
+  #errButton{
+    float: right;
+  }
+  li{
+    min-height: 50px;
+    font-family: 'Philosopher', sans-serif;
+    
+  }
+  .taskToComplete{
+    font-family: 'Philosopher', sans-serif;
+    background-color: #24BFEB;
+  
+  }
+  .completedTask{
+    font-family: 'Philosopher', sans-serif;
+   background-color: rgb(153, 221, 255);
+  }
+  
+  .list-group-item:last-child {
+    margin-bottom: 0;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+    background-color: #24BFEB;
+}
+.list-group-item:first-child {
+  margin-bottom: 0;
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 4px;
+  background-color: #24BFEB;
+}
+
+.list-group-item {
+  position: relative;
+  display: block;
+  padding: 10px 15px;
+  margin-bottom: -1px;
+  background-color: #24BFEB !important;
+  border: 1px solid #ddd;
+}
