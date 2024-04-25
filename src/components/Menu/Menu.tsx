@@ -22,8 +22,6 @@ const Menu: React.FC = () => {
     closeMenuHandler();
   };
 
-
-
   return (
     <LayoutMenus
       menuOpen={menuOpen}
