@@ -18,8 +18,6 @@ const ItemDirectory: React.FC<ItemDirectoryProps> = ({
   classActive,
   onClick, // Fix casing of onClick
 }) => {
-  const route = useLocation();
-  const currentPath = route.pathname;
   const dispatch = useAppDispatch();
 
   const [modalIsShown, setModalIsShown] = useState<boolean>(false);

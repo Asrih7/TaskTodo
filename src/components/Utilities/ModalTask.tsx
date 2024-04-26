@@ -37,7 +37,6 @@ const ModalCreateTask: React.FC<{
   const today: Date = new Date();
   let day: number = today.getDate();
   let month: number = today.getMonth() + 1;
-  const year: number = today.getFullYear();
   if (day < 10) {
     day = +("0" + day);
   }
