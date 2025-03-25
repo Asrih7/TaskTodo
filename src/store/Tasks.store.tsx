@@ -7,38 +7,16 @@ import {
 } from "@reduxjs/toolkit";
 import { Task } from "../interfaces";
 
-const defaultTasks: Task[] = [
-  {
-    title: "Task 1",
-    important: false,
-    description: "This is the description for this task",
-    date: "2023-04-12",
-    dir: "Main",
-    completed: true,
-    id: "t1",
-  },
-  {
-    title: "Task 2",
-    important: true,
-    description: "This is the description for this task",
-    date: "2023-05-15",
-    dir: "Main",
-    completed: true,
-    id: "t2",
-  },
-  {
-    title: "Task 3",
-    important: false,
-    description: "This is the description for this task",
-    date: "2023-08-21",
-    dir: "Main",
-    completed: false,
-    id: "t3",
-  },
-];
-
 const getSavedDirectories = (): string[] => {
   let dirList: string[] = [];
+  
+  // Check if all data was deleted
+  const isAllDataDeleted = localStorage.getItem("all_data_deleted") === "true";
+  
+  if (isAllDataDeleted) {
+    return ["Main"];
+  }
+
   if (localStorage.getItem("directories")) {
     dirList = JSON.parse(localStorage.getItem("directories")!);
     const mainDirExists = dirList.some((dir: string) => dir === "Main");
@@ -64,13 +42,31 @@ const getSavedDirectories = (): string[] => {
   return dirList;
 };
 
+const getInitialTasks = (): Task[] => {
+  // Check if all data was deleted
+  const isAllDataDeleted = localStorage.getItem("all_data_deleted") === "true";
+  
+  if (isAllDataDeleted) {
+    return [];
+  }
+
+  // Retrieve tasks from localStorage, filtering out any deleted tasks
+  const savedTasksInStorage = localStorage.getItem("tasks");
+  const deletedTaskIds = JSON.parse(localStorage.getItem("deleted_tasks") || "[]");
+
+  if (savedTasksInStorage) {
+    const savedTasks = JSON.parse(savedTasksInStorage);
+    return savedTasks.filter((task: Task) => !deletedTaskIds.includes(task.id));
+  }
+
+  return [];
+};
+
 const initialState: {
   tasks: Task[];
   directories: string[];
 } = {
-  tasks: localStorage.getItem("tasks")
-    ? JSON.parse(localStorage.getItem("tasks")!)
-    : defaultTasks,
+  tasks: getInitialTasks(),
   directories: getSavedDirectories(),
 };
 
@@ -79,39 +75,59 @@ const tasksSlice = createSlice({
   initialState: initialState,
   reducers: {
     addNewTask(state, action: PayloadAction<Task>) {
+      // Remove all_data_deleted flag when adding a new task
+      localStorage.removeItem("all_data_deleted");
       state.tasks = [action.payload, ...state.tasks];
     },
-    removeTask(state, action) {
-      const newTasksList = state.tasks.filter(
-        (task) => task.id !== action.payload
-      );
-      state.tasks = newTasksList;
+    removeTask(state, action: PayloadAction<string>) {
+      const taskIdToRemove = action.payload;
+      
+      // Get current list of deleted task IDs
+      const deletedTaskIds = JSON.parse(localStorage.getItem("deleted_tasks") || "[]");
+      
+      // Add the new task ID to deleted tasks
+      const updatedDeletedTaskIds = [...deletedTaskIds, taskIdToRemove];
+      localStorage.setItem("deleted_tasks", JSON.stringify(updatedDeletedTaskIds));
+
+      // Remove the task from the current state
+      state.tasks = state.tasks.filter((task) => task.id !== taskIdToRemove);
     },
     markAsImportant(state, action: PayloadAction<string>) {
       const newTaskFavorited = state.tasks.find(
         (task) => task.id === action.payload
       );
-      newTaskFavorited!.important = !newTaskFavorited!.important;
+      if (newTaskFavorited) {
+        newTaskFavorited.important = !newTaskFavorited.important;
+      }
     },
     editTask(state, action: PayloadAction<Task>) {
       const taskId = action.payload.id;
 
-      const newTaskEdited: Task = state.tasks.find(
-        (task: Task) => task.id === taskId
-      )!;
-      const indexTask = state.tasks.indexOf(newTaskEdited);
-      state.tasks[indexTask] = action.payload;
+      const taskIndex = state.tasks.findIndex((task) => task.id === taskId);
+      if (taskIndex !== -1) {
+        state.tasks[taskIndex] = action.payload;
+      }
     },
     toggleTaskCompleted(state, action: PayloadAction<string>) {
       const taskId = action.payload;
 
-      const currTask = state.tasks.find((task) => task.id === taskId)!;
-
-      currTask.completed = !currTask.completed;
+      const currTask = state.tasks.find((task) => task.id === taskId);
+      if (currTask) {
+        currTask.completed = !currTask.completed;
+      }
     },
     deleteAllData(state) {
       state.tasks = [];
       state.directories = ["Main"];
+      
+      // Set flag for all data deletion
+      localStorage.setItem("all_data_deleted", "true");
+      
+      // Clear other localStorage items
+      localStorage.removeItem("tasks");
+      localStorage.removeItem("directories");
+      localStorage.removeItem("deleted_tasks");
+      localStorage.removeItem("darkmode");
     },
     createDirectory(state, action: PayloadAction<string>) {
       const newDirectory: string = action.payload;
@@ -152,6 +168,11 @@ export default tasksSlice.reducer;
 export const tasksMiddleware =
   (store: MiddlewareAPI) => (next: Dispatch) => (action: Action) => {
     const nextAction = next(action);
+    
+    // Skip middleware if all data was deleted
+    const isAllDataDeleted = localStorage.getItem("all_data_deleted") === "true";
+    if (isAllDataDeleted) return nextAction;
+
     const actionChangeOnlyDirectories =
       tasksActions.createDirectory.match(action);
 
@@ -168,20 +189,5 @@ export const tasksMiddleware =
       localStorage.setItem("directories", JSON.stringify(dirList));
     }
 
-    if (tasksActions.deleteAllData.match(action)) {
-      localStorage.removeItem("tasks");
-      localStorage.removeItem("directories");
-      localStorage.removeItem("darkmode");
-    }
-
-    if (tasksActions.removeTask.match(action)) {
-      console.log(JSON.parse(localStorage.getItem("tasks")!));
-      if (localStorage.getItem("tasks")) {
-        const localStorageTasks = JSON.parse(localStorage.getItem("tasks")!);
-        if (localStorageTasks.length === 0) {
-          localStorage.removeItem("tasks");
-        }
-      }
-    }
     return nextAction;
   };
