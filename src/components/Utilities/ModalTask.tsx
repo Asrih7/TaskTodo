@@ -44,51 +44,33 @@ const ModalCreateTask: React.FC<{
     month = +("0" + month);
   }
 
-const todayDate: string = today.toISOString().split("T")[0]; // Convert to YYYY-MM-DD format
-const maxDate: string = (today.getFullYear() + 1) + "-" + (today.getMonth() + 1) + "-" + today.getDate(); // Calculate max date
+  const todayDate: string = today.toISOString().split("T")[0];
+  const maxDate: string =
+    today.getFullYear() + 1 + "-" + (today.getMonth() + 1) + "-" + today.getDate();
 
-
-  const [description, setDescription] = useState<string>(() => {
-    if (task) {
-      return task.description;
-    }
-    return "";
-  });
-  const [title, setTitle] = useState<string>(() => {
-    if (task) {
-      return task.title;
-    }
-    return "";
-  });
-  const [date, setDate] = useState<string>(() => {
-    if (task) {
-      return task.date;
-    }
-    return todayDate;
-  });
+  const [description, setDescription] = useState<string>(() => task?.description || "");
+  const [title, setTitle] = useState<string>(() => task?.title || "");
+  const [date, setDate] = useState<string>(() => task?.date || todayDate);
   const isTitleValid = useRef<Boolean>(false);
   const isDateValid = useRef<Boolean>(false);
 
-  const [isImportant, setIsImportant] = useState<boolean>(() => {
-    if (task) {
-      return task.important;
-    }
-    return false;
-  });
+  const [isImportant, setIsImportant] = useState<boolean>(() => task?.important || false);
+  const [isCompleted, setIsCompleted] = useState<boolean>(() => task?.completed || false);
+  const [selectedDirectory, setSelectedDirectory] = useState<string>(() => task?.dir || directories[0]);
 
-  const [isCompleted, setIsCompleted] = useState<boolean>(() => {
-    if (task) {
-      return task.completed;
-    }
-    return false;
-  });
+  // 🆕 Image state
+  const [image, setImage] = useState<string | undefined>(() => task?.image);
 
-  const [selectedDirectory, setSelectedDirectory] = useState<string>(() => {
-    if (task) {
-      return task.dir;
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-    return directories[0];
-  });
+  };
 
   const addNewTaskHandler = (event: React.FormEvent): void => {
     event.preventDefault();
@@ -105,17 +87,16 @@ const maxDate: string = (today.getFullYear() + 1) + "-" + (today.getMonth() + 1)
         completed: isCompleted,
         important: isImportant,
         id: task?.id ? task.id : Date.now().toString(),
+        image: image, // 🆕 Add image to task
       };
       onConfirm(newTask);
       onClose();
     }
   };
+
   return (
     <Modal onClose={onClose} title={nameForm}>
-      <form
-        className="flex flex-col stylesInputsField"
-        onSubmit={addNewTaskHandler}
-      >
+      <form className="flex flex-col stylesInputsField" onSubmit={addNewTaskHandler}>
         <label>
           Title
           <input
@@ -148,6 +129,25 @@ const maxDate: string = (today.getFullYear() + 1) + "-" + (today.getMonth() + 1)
             onChange={({ target }) => setDescription(target.value)}
           ></textarea>
         </label>
+
+        {/* 🆕 Image Upload */}
+        <label>
+          Attach Image (optional)
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="block w-full"
+          />
+        </label>
+        {image && (
+          <img
+            src={image}
+            alt="Task Preview"
+            className="mt-2 rounded-lg max-h-40 object-cover"
+          />
+        )}
+
         <label>
           Select a directory
           <select

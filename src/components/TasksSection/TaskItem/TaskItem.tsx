@@ -23,6 +23,18 @@ const TaskItem: React.FC<{ isListInView1: boolean; task: Task }> = ({
             isListInView1 ? "flex-row sm:h-32" : "flex-col h-52 sm:h-64"
           }`}
         >
+          {/* Display image if available */}
+          {task.image && (
+            <img
+              src={task.image}
+              alt={task.title}
+              className={`rounded-md object-cover ${
+                isListInView1 ? "w-24 h-24 mr-4" : "w-full h-40 mb-4"
+              }`}
+            />
+          )}
+
+          {/* Rest of task info */}
           <InfosTask task={task} isListInView1={isListInView1} />
           <ActionsTaskItem task={task} isListInView1={isListInView1} />
         </article>

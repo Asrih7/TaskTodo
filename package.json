@@ -2,7 +2,18 @@
   "name": "tasks-todo",
   "version": "2.26.4",
   "private": true,
+  "description": "A powerful, intuitive task manager and to-do list app for organizing your daily tasks and boosting productivity.",
+  "keywords": [
+    "todo",
+    "task-manager",
+    "productivity",
+    "ionic",
+    "react",
+    "mobile-app"
+  ],
+  "homepage": ".",
   "dependencies": {
+    "@capacitor-community/admob": "^7.0.3",
     "@capacitor/android": "^7.0.0",
     "@capacitor/core": "^7.0.0",
     "@capacitor/splash-screen": "^7.0.0",
