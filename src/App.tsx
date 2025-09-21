@@ -5,6 +5,7 @@ import Footer from "./components/Footer";
 import Menu from "./components/Menu/Menu";
 import TasksSection from "./components/TasksSection/TasksSection";
 import ModalCreateTask from "./components/Utilities/ModalTask";
+import AIEnhancedTasksSection from "./components/AI/AIEnhancedTasksSection";
 import { Task } from "./interfaces";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { modalActions } from "./store/Modal.store";
@@ -43,7 +44,11 @@ const App: React.FC = () => {
             />
           )}
           <Menu />
+         
           <TasksSection />
+           <div className="pt-6 px-4 max-w-4xl mx-auto -mt-48">
+            <AIEnhancedTasksSection />
+          </div>
           <Footer />
           <AccountData />
         </div>

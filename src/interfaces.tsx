@@ -7,4 +7,5 @@ export interface Task {
   important: boolean;
   id: string;
   image?: string; // optional image (Base64 or URL)
+  estimatedDuration?: number; // AI estimated duration in minutes
 }
