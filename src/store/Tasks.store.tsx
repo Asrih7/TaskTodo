@@ -6,6 +6,7 @@ import {
   PayloadAction,
 } from "@reduxjs/toolkit";
 import { Task } from "../interfaces";
+import { notificationService } from "../services/notificationService";
 
 const getSavedDirectories = (): string[] => {
   let dirList: string[] = [];
@@ -78,9 +79,15 @@ const tasksSlice = createSlice({
       // Remove all_data_deleted flag when adding a new task
       localStorage.removeItem("all_data_deleted");
       state.tasks = [action.payload, ...state.tasks];
+      
+      // Schedule notification for the new task
+      notificationService.scheduleTaskReminder(action.payload);
     },
     removeTask(state, action: PayloadAction<string>) {
       const taskIdToRemove = action.payload;
+      
+      // Cancel notification for the removed task
+      notificationService.cancelTaskReminder(taskIdToRemove);
       
       // Get current list of deleted task IDs
       const deletedTaskIds = JSON.parse(localStorage.getItem("deleted_tasks") || "[]");
@@ -106,6 +113,9 @@ const tasksSlice = createSlice({
       const taskIndex = state.tasks.findIndex((task) => task.id === taskId);
       if (taskIndex !== -1) {
         state.tasks[taskIndex] = action.payload;
+        
+        // Update notification for the edited task
+        notificationService.updateTaskReminder(action.payload);
       }
     },
     toggleTaskCompleted(state, action: PayloadAction<string>) {
@@ -114,6 +124,13 @@ const tasksSlice = createSlice({
       const currTask = state.tasks.find((task) => task.id === taskId);
       if (currTask) {
         currTask.completed = !currTask.completed;
+        
+        // Cancel notification if task is completed, schedule if uncompleted
+        if (currTask.completed) {
+          notificationService.cancelTaskReminder(taskId);
+        } else {
+          notificationService.scheduleTaskReminder(currTask);
+        }
       }
     },
     deleteAllData(state) {

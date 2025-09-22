@@ -1,9 +1,10 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import useVisibility from "../hooks/useVisibility";
 import { ReactComponent as IconBell } from "../../assets/bell.svg";
 import useTodayTasks from "../hooks/useTodayTasks";
 import useCompletedTasks from "../hooks/useCompletedTasks";
 import { Link } from "react-router-dom";
+import { notificationService } from "../../services/notificationService";
 
 const classHasNotification =
   "after:content-[''] after:w-2 after:h-2 after:bg-rose-500 block after:rounded-full after:absolute after:bottom-3/4  after:left-3/4";
@@ -26,6 +27,11 @@ const Notification: React.FC = () => {
   const tasksToShow = uncompletedTasks.slice(0, 3);
 
   const moreTasksToShow = uncompletedTasks.length > tasksToShow.length;
+
+  // Initialize notifications on component mount
+  useEffect(() => {
+    notificationService.initialize();
+  }, []);
   return (
     <div className="sm:mr-4 md:mr-6 ml-auto grid place-items-center relative">
       <button
@@ -50,7 +56,14 @@ const Notification: React.FC = () => {
                       to={`/task/${task.id}`}
                       className="hover:text-slate-200 transition"
                     >
-                      {task.title}
+                      <div className="flex flex-col">
+                        <span className="font-medium">{task.title}</span>
+                        {task.time && (
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            🕒 {task.time}
+                          </span>
+                        )}
+                      </div>
                     </Link>
                   </li>
                 ))}

@@ -3,6 +3,7 @@ export interface Task {
   dir: string;
   description: string;
   date: string;
+  time?: string; // optional time for the task (HH:MM format)
   completed: boolean;
   important: boolean;
   id: string;

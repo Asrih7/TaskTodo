@@ -3,7 +3,7 @@ import { Task } from "../../interfaces";
 import { useAppSelector } from "../../store/hooks";
 import Modal from "./Modal";
 
-// Multilingual Autocomplete Input Component
+// Multilingual Autocomplete Input Component with Voice Support
 const AutocompleteInput: React.FC<{
   title: string;
   setTitle: (value: string) => void;
@@ -13,8 +13,58 @@ const AutocompleteInput: React.FC<{
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSuggestion, setActiveSuggestion] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setTitle(title + ' ' + transcript);
+        setIsListening(false);
+        setIsRecording(false);
+      };
+
+      recognitionRef.current.onerror = () => {
+        setIsListening(false);
+        setIsRecording(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+        setIsRecording(false);
+      };
+    }
+  }, [title, setTitle]);
+
+  const startVoiceRecording = () => {
+    if (recognitionRef.current) {
+      setIsRecording(true);
+      recognitionRef.current.start();
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+      setIsListening(false);
+    }
+  };
 
   // Common words and phrases in English, French, and Spanish
  const dictionary = [
@@ -211,22 +261,53 @@ const AutocompleteInput: React.FC<{
 
   return (
     <div className="relative">
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder={placeholder}
-        required
-        value={title}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        onFocus={() => {
-          if (suggestions.length > 0) {
-            setShowSuggestions(true);
-          }
-        }}
-        className={className}
-        autoComplete="off"
-      />
+      <div className="relative flex items-center">
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder={placeholder}
+          required
+          value={title}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => {
+            if (suggestions.length > 0) {
+              setShowSuggestions(true);
+            }
+          }}
+          className={`${className} pr-12`}
+          autoComplete="off"
+        />
+        
+        {/* Voice Recording Button */}
+        <button
+          type="button"
+          onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
+          className={`absolute right-2 p-2 rounded-full transition-colors ${
+            isRecording 
+              ? 'bg-red-500 text-white animate-pulse' 
+              : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
+          }`}
+          title={isRecording ? 'Stop recording' : 'Start voice recording'}
+        >
+          {isRecording ? (
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <rect x="6" y="6" width="8" height="8" rx="1"/>
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd"/>
+            </svg>
+          )}
+        </button>
+        
+        {/* Recording Status */}
+        {isListening && (
+          <div className="absolute -bottom-6 left-0 text-xs text-blue-600 dark:text-blue-400 animate-pulse">
+            🎤 Listening...
+          </div>
+        )}
+      </div>
       
       {showSuggestions && suggestions.length > 0 && (
         <div
@@ -306,6 +387,7 @@ const ModalCreateTask: React.FC<{
   const [description, setDescription] = useState<string>(() => task?.description || "");
   const [title, setTitle] = useState<string>(() => task?.title || "");
   const [date, setDate] = useState<string>(() => task?.date || todayDate);
+  const [time, setTime] = useState<string>(() => task?.time || "");
   const isTitleValid = useRef<Boolean>(false);
   const isDateValid = useRef<Boolean>(false);
 
@@ -339,6 +421,7 @@ const ModalCreateTask: React.FC<{
         dir: selectedDirectory,
         description: description,
         date: date,
+        time: time || undefined,
         completed: isCompleted,
         important: isImportant,
         id: task?.id ? task.id : Date.now().toString(),
@@ -372,6 +455,21 @@ const ModalCreateTask: React.FC<{
             min={todayDate}
             max={maxDate}
           />
+        </label>
+        <label>
+          Time (optional)
+          <input
+            type="time"
+            className="w-full"
+            value={time}
+            onChange={({ target }) => setTime(target.value)}
+            placeholder="Set reminder time"
+          />
+          {time && (
+            <small className="text-sm text-slate-600 dark:text-slate-400">
+              📱 You'll get a notification reminder at this time
+            </small>
+          )}
         </label>
         <label>
           Description (optional)
