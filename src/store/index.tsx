@@ -3,13 +3,19 @@ import tasksReducer, { tasksMiddleware } from "./Tasks.store";
 import modalReducer from "./Modal.store";
 import menuReducer from "./Menu.store";
 import aiReducer from "./AI.store";
+import gamificationReducer from "./Gamification.store";
+import moodReducer from "./Mood.store";
+import themeReducer from "./Theme.store";
 
 const store = configureStore({
   reducer: { 
     tasks: tasksReducer, 
     modal: modalReducer, 
     menu: menuReducer,
-    ai: aiReducer 
+    ai: aiReducer,
+    gamification: gamificationReducer,
+    mood: moodReducer,
+    theme: themeReducer,
   },
   middleware: (getDefaultMiddleware: any) =>
     getDefaultMiddleware().concat(tasksMiddleware),

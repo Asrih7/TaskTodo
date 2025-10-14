@@ -129,8 +129,8 @@ export class AIService {
 
   // Generate daily/weekly insights
   async generateInsights(tasks: Task[], timeframe: 'daily' | 'weekly'): Promise<string> {
-    const completedTasks = tasks.filter(t => t.completed);
-    const pendingTasks = tasks.filter(t => !t.completed);
+    const completedTasks = tasks.filter((t:any) => t.completed);
+    const pendingTasks = tasks.filter((t:any) => !t.completed);
     
     const systemPrompt = `You are a productivity coach. Provide encouraging and actionable insights about the user's task completion.
     Keep it positive and motivational. Include specific suggestions for improvement.

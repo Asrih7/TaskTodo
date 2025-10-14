@@ -125,10 +125,11 @@ const tasksSlice = createSlice({
       if (currTask) {
         currTask.completed = !currTask.completed;
         
-        // Cancel notification if task is completed, schedule if uncompleted
         if (currTask.completed) {
+          currTask.completedAt = new Date().toISOString();
           notificationService.cancelTaskReminder(taskId);
         } else {
+          currTask.completedAt = undefined;
           notificationService.scheduleTaskReminder(currTask);
         }
       }
@@ -189,6 +190,21 @@ export const tasksMiddleware =
     // Skip middleware if all data was deleted
     const isAllDataDeleted = localStorage.getItem("all_data_deleted") === "true";
     if (isAllDataDeleted) return nextAction;
+
+    // Award XP on task completion
+    if (tasksActions.toggleTaskCompleted.match(action)) {
+      const state = store.getState() as any;
+      const task = state.tasks.tasks.find((t: Task) => t.id === action.payload);
+      
+      if (task?.completed) {
+        const xp = task.xpReward || 25;
+        store.dispatch({ type: 'gamification/addXP', payload: xp });
+        store.dispatch({ type: 'gamification/incrementTasksCompleted' });
+        
+        const hour = new Date().getHours();
+        store.dispatch({ type: 'gamification/checkAndAwardBadges', payload: { hour } });
+      }
+    }
 
     const actionChangeOnlyDirectories =
       tasksActions.createDirectory.match(action);

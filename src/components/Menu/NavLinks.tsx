@@ -8,6 +8,10 @@ interface NavLinksProps {
 
 const links = [
   {
+    name: "Dashboard",
+    path: "/dashboard",
+  },
+  {
     name: "Today's tasks",
     path: "/today",
   },

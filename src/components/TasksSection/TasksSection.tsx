@@ -7,6 +7,7 @@ import ImportantTasks from "../Routes/ImportantTasks";
 import SearchResults from "../Routes/SearchResults";
 import TaskOnly from "../Routes/TaskOnly";
 import TodaysTasks from "../Routes/TodaysTasks";
+import GamificationDashboard from "../Dashboard/GamificationDashboard";
 import HeaderTasks from "./HeaderTasks";
 
 const TasksSection: React.FC = () => {
@@ -15,6 +16,7 @@ const TasksSection: React.FC = () => {
       <HeaderTasks />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<GamificationDashboard />} />
         <Route path="/today" element={<TodaysTasks />} />
         <Route path="/important" element={<ImportantTasks />} />
         <Route
