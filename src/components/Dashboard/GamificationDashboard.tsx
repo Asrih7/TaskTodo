@@ -23,13 +23,8 @@ const GamificationDashboard: React.FC = () => {
       </div>
 
       {/* Mood and Voice */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <MoodTracker />
-        <VoiceInput />
-      </div>
 
       {/* Smart Input */}
-      <SmartTaskInput />
 
       {/* Focus Mode */}
       <FocusMode />
