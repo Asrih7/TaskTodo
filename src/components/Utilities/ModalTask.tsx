@@ -3,6 +3,277 @@ import { Task } from "../../interfaces";
 import { useAppSelector } from "../../store/hooks";
 import Modal from "./Modal";
 
+// Custom Date Picker Component
+const CustomDatePicker: React.FC<{
+  value: string;
+  onChange: (date: string) => void;
+  min: string;
+  max: string;
+}> = ({ value, onChange, min, max }) => {
+  const [showPicker, setShowPicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(value);
+  const [currentMonth, setCurrentMonth] = useState(new Date(value || new Date()));
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setShowPicker(false);
+      }
+    };
+    if (showPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showPicker]);
+
+  const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return 'Select date';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    return { firstDay, daysInMonth };
+  };
+
+  const handleDateSelect = (day: number) => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    setSelectedDate(dateStr);
+    onChange(dateStr);
+    setShowPicker(false);
+  };
+
+  const changeMonth = (offset: number) => {
+    const newMonth = new Date(currentMonth);
+    newMonth.setMonth(newMonth.getMonth() + offset);
+    setCurrentMonth(newMonth);
+  };
+
+  const { firstDay, daysInMonth } = getDaysInMonth(currentMonth);
+  const days = [];
+  
+  for (let i = 0; i < firstDay; i++) {
+    days.push(<div key={`empty-${i}`} className="p-2"></div>);
+  }
+  
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const isSelected = dateStr === selectedDate;
+    const isToday = dateStr === new Date().toISOString().split('T')[0];
+    
+    days.push(
+      <button
+        key={day}
+        type="button"
+        onClick={() => handleDateSelect(day)}
+        className={`p-2 text-center rounded-lg transition-colors ${
+          isSelected 
+            ? 'bg-[#646cffaa] text-white font-bold' 
+            : isToday
+            ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
+            : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+        }`}
+      >
+        {day}
+      </button>
+    );
+  }
+
+  return (
+    <div className="relative" ref={pickerRef}>
+      <input
+        type="text"
+        readOnly
+        value={formatDisplayDate(selectedDate)}
+        onClick={() => setShowPicker(!showPicker)}
+        className="w-full cursor-pointer"
+        required
+      />
+      
+      {showPicker && (
+        <div className="absolute z-50 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg p-4 w-80 left-1/2 -translate-x-1/2">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              type="button"
+              onClick={() => changeMonth(-1)}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
+            >
+              ←
+            </button>
+            <div className="font-semibold">
+              {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </div>
+            <button
+              type="button"
+              onClick={() => changeMonth(1)}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
+            >
+              →
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-7 gap-1 mb-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <div className="text-center">Sun</div>
+            <div className="text-center">Mon</div>
+            <div className="text-center">Tue</div>
+            <div className="text-center">Wed</div>
+            <div className="text-center">Thu</div>
+            <div className="text-center">Fri</div>
+            <div className="text-center">Sat</div>
+          </div>
+          
+          <div className="grid grid-cols-7 gap-1">
+            {days}
+          </div>
+          
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowPicker(false);
+              }}
+              className="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded hover:bg-slate-300 dark:hover:bg-slate-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const today = new Date().toISOString().split('T')[0];
+                setSelectedDate(today);
+                onChange(today);
+                setShowPicker(false);
+              }}
+              className="flex-1 px-4 py-2 bg-[#646cffaa] text-white rounded hover:bg-[#646cff]"
+            >
+              Today
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Custom Time Picker Component
+const CustomTimePicker: React.FC<{
+  value: string;
+  onChange: (time: string) => void;
+}> = ({ value, onChange }) => {
+  const [showPicker, setShowPicker] = useState(false);
+  const [hours, setHours] = useState(value ? value.split(':')[0] : '12');
+  const [minutes, setMinutes] = useState(value ? value.split(':')[1] : '00');
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setShowPicker(false);
+      }
+    };
+    if (showPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showPicker]);
+
+  const handleConfirm = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const timeStr = `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+    onChange(timeStr);
+    setShowPicker(false);
+  };
+
+  const hourOptions = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+  const minuteOptions = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+
+  return (
+    <div className="relative" ref={pickerRef}>
+      <input
+        type="text"
+        readOnly
+        value={value || 'Select time'}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setShowPicker(!showPicker);
+        }}
+        className="w-full cursor-pointer"
+        placeholder="Set reminder time"
+      />
+      
+      {showPicker && (
+        <div className="absolute z-50 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-lg p-4 w-64 left-1/2 -translate-x-1/2">
+          <div className="text-center mb-4 font-semibold">Select Time</div>
+          
+          <div className="flex gap-2 items-center justify-center mb-4">
+            <select
+              value={hours}
+              onChange={(e) => {
+                e.stopPropagation();
+                setHours(e.target.value);
+              }}
+              className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-2xl font-bold"
+            >
+              {hourOptions.map(h => (
+                <option key={h} value={h}>{h}</option>
+              ))}
+            </select>
+            
+            <span className="text-2xl font-bold">:</span>
+            
+            <select
+              value={minutes}
+              onChange={(e) => {
+                e.stopPropagation();
+                setMinutes(e.target.value);
+              }}
+              className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded bg-white dark:bg-slate-700 text-2xl font-bold"
+            >
+              {minuteOptions.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowPicker(false);
+              }}
+              className="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 rounded hover:bg-slate-300 dark:hover:bg-slate-600"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirm}
+              className="flex-1 px-4 py-2 bg-[#646cffaa] text-white rounded hover:bg-[#646cff]"
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Multilingual Autocomplete Input Component with Voice Support
 const AutocompleteInput: React.FC<{
   title: string;
@@ -66,118 +337,83 @@ const AutocompleteInput: React.FC<{
     }
   };
 
-  // Common words and phrases in English, French, and Spanish
- const dictionary = [
-  // ================================================================
-  // Original Tasks (English, French, Spanish)
-  // ================================================================
-  'study for the test', 'buy groceries', 'call dentist', 'finish project',
-  'schedule meeting', 'write report', 'clean house', 'exercise workout',
-  'pay bills', 'book appointment', 'send email', 'review documents',
-  'prepare presentation', 'organize files', 'update website', 'backup data',
-  'meeting with team', 'doctor appointment', 'grocery shopping', 'oil change',
-  'birthday party', 'dinner reservation', 'flight booking', 'hotel reservation',
-
-  'étudier pour l\'examen', 'acheter des courses', 'appeler le dentiste', 'finir le projet',
-  'programmer une réunion', 'écrire un rapport', 'nettoyer la maison', 'faire du sport',
-  'payer les factures', 'prendre rendez-vous', 'envoyer un email', 'réviser les documents',
-  'préparer la présentation', 'organiser les fichiers', 'mettre à jour le site', 'sauvegarder les données',
-  'réunion équipe', 'rendez-vous médecin', 'faire les courses', 'vidange voiture',
-  'anniversaire', 'réservation restaurant', 'réserver vol', 'réservation hôtel',
-
-  'estudiar para el examen', 'comprar comestibles', 'llamar al dentista', 'terminar proyecto',
-  'programar reunión', 'escribir informe', 'limpiar casa', 'hacer ejercicio',
-  'pagar facturas', 'hacer cita', 'enviar correo', 'revisar documentos',
-  'preparar presentación', 'organizar archivos', 'actualizar sitio web', 'respaldar datos',
-  'reunión con equipo', 'cita médico', 'hacer compras', 'cambio aceite',
-  'fiesta cumpleaños', 'reserva restaurante', 'reservar vuelo', 'reserva hotel',
-
-  // Common verbs
-  'buy', 'call', 'send', 'write', 'read', 'study', 'work', 'clean', 'organize', 'schedule',
-  'acheter', 'appeler', 'envoyer', 'écrire', 'lire', 'étudier', 'travailler', 'nettoyer', 'organiser', 'programmer',
-  'comprar', 'llamar', 'enviar', 'escribir', 'leer', 'estudiar', 'trabajar', 'limpiar', 'organizar', 'programar',
-
-  // Common objects/places
-  'appointment', 'meeting', 'document', 'report', 'project', 'email', 'phone', 'computer',
-  'rendez-vous', 'réunion', 'document', 'rapport', 'projet', 'email', 'téléphone', 'ordinateur',
-  'cita', 'reunión', 'documento', 'informe', 'proyecto', 'correo', 'teléfono', 'computadora',
-
-  // ================================================================
-  // New Expansion: Daily Tasks
-  // ================================================================
-  'walk the dog', 'take out trash', 'wash dishes', 'do laundry', 'cook dinner', 'make breakfast',
-  'make lunch', 'prepare snacks', 'water plants', 'vacuum floor', 'clean kitchen',
-  'clean bathroom', 'sweep floor', 'mop floor', 'fold laundry', 'iron clothes', 'change bedsheets',
-  'promener le chien', 'sortir les poubelles', 'laver la vaisselle', 'faire la lessive', 'préparer le dîner',
-  'préparer le petit déjeuner', 'arroser les plantes', 'passer l’aspirateur', 'nettoyer la cuisine',
-  'nettoyer salle de bain', 'changer draps', 'repasser vêtements',
-  'sacar la basura', 'lavar los platos', 'hacer la colada', 'cocinar la cena', 'preparar desayuno',
-  'regar las plantas', 'pasar la aspiradora', 'limpiar cocina', 'limpiar baño', 'cambiar sábanas',
-
-  // ================================================================
-  // Work & Productivity
-  // ================================================================
-  'submit report', 'join meeting', 'update spreadsheet', 'review code', 'deploy app', 'fix bug',
-  'send invoice', 'prepare budget', 'write proposal', 'check emails', 'attend training',
-  'team presentation', 'debug program', 'analyze data', 'update CRM', 'customer call',
-  'soumettre rapport', 'participer réunion', 'mettre à jour tableau', 'corriger bug', 'envoyer facture',
-  'préparer budget', 'écrire proposition', 'vérifier emails', 'formation', 'présentation équipe',
-  'entregar informe', 'unirse a reunión', 'actualizar hoja de cálculo', 'corregir error', 'enviar factura',
-  'preparar presupuesto', 'escribir propuesta', 'revisar correos', 'presentación equipo',
-
-  // ================================================================
-  // Health & Fitness
-  // ================================================================
-  'go to gym', 'run 5km', 'yoga session', 'meditate', 'doctor checkup', 'dentist visit',
-  'drink water', 'track calories', 'take medicine', 'health insurance renewal', 'stretching exercises',
-  'walk outside', 'go for a run', 'do pushups', 'cycling session',
-  'aller à la salle', 'courir 5km', 'séance yoga', 'méditer', 'consultation médecin',
-  'visite dentiste', 'boire de l’eau', 'prendre médicaments', 'renouveler assurance santé',
-  'marche dehors', 'faire des pompes', 'séance vélo',
-  'ir al gimnasio', 'correr 5km', 'sesión de yoga', 'meditar', 'cita médica',
-  'visita dentista', 'beber agua', 'tomar medicina', 'renovar seguro médico',
-  'caminar afuera', 'hacer flexiones', 'sesión de ciclismo',
-
-  // ================================================================
-  // Shopping & Finance
-  // ================================================================
-  'buy clothes', 'order food', 'pay rent', 'transfer money', 'withdraw cash', 'shop online',
-  'renew subscription', 'check bank account', 'buy gift', 'refill groceries',
-  'pay electricity bill', 'pay water bill', 'pay internet bill', 'pay phone bill',
-  'acheter vêtements', 'commander repas', 'payer loyer', 'transférer argent',
-  'retirer argent', 'faire achats en ligne', 'renouveler abonnement', 'vérifier compte bancaire',
-  'acheter cadeau', 'remplir courses', 'payer facture électricité', 'payer facture eau',
-  'comprar ropa', 'pedir comida', 'pagar alquiler', 'transferir dinero',
-  'retirar dinero', 'comprar en línea', 'renovar suscripción', 'revisar cuenta bancaria',
-  'comprar regalo', 'reponer compras', 'pagar factura de luz', 'pagar factura de agua',
-
-  // ================================================================
-  // Travel & Errands
-  // ================================================================
-  'book taxi', 'buy train ticket', 'pack luggage', 'renew passport', 'fuel car',
-  'pick up package', 'go to post office', 'check flights', 'hotel check-in', 'return books',
-  'library visit', 'register for class', 'print documents', 'go to bank',
-  'réserver taxi', 'acheter billet train', 'préparer valise', 'renouveler passeport',
-  'faire le plein', 'récupérer colis', 'aller à la poste', 'vérifier vols', 'enregistrement hôtel',
-  'visite bibliothèque', 'imprimer documents', 'aller à la banque',
-  'reservar taxi', 'comprar billete tren', 'hacer maleta', 'renovar pasaporte',
-  'llenar tanque', 'recoger paquete', 'ir a correos', 'revisar vuelos', 'check-in hotel',
-  'visitar biblioteca', 'imprimir documentos', 'ir al banco',
-
-  // ================================================================
-  // Social & Personal
-  // ================================================================
-  'call mom', 'visit grandma', 'buy birthday gift', 'dinner with friends', 'plan trip',
-  'watch movie', 'read book', 'family lunch', 'go for coffee', 'attend wedding',
-  'attend party', 'play video games', 'listen to music', 'walk in park',
-  'appeler maman', 'visiter grand-mère', 'acheter cadeau anniversaire', 'dîner avec amis',
-  'planifier voyage', 'regarder film', 'lire livre', 'déjeuner en famille', 'prendre un café',
-  'aller au mariage', 'aller à la fête', 'jouer jeux vidéo', 'écouter musique', 'se promener parc',
-  'llamar a mamá', 'visitar abuela', 'comprar regalo cumpleaños', 'cenar con amigos',
-  'planear viaje', 'ver película', 'leer libro', 'almuerzo familiar', 'tomar café',
-  'asistir boda', 'asistir fiesta', 'jugar videojuegos', 'escuchar música', 'pasear en parque'
-];
-
+  const dictionary = [
+    'study for the test', 'buy groceries', 'call dentist', 'finish project',
+    'schedule meeting', 'write report', 'clean house', 'exercise workout',
+    'pay bills', 'book appointment', 'send email', 'review documents',
+    'prepare presentation', 'organize files', 'update website', 'backup data',
+    'meeting with team', 'doctor appointment', 'grocery shopping', 'oil change',
+    'birthday party', 'dinner reservation', 'flight booking', 'hotel reservation',
+    'étudier pour l\'examen', 'acheter des courses', 'appeler le dentiste', 'finir le projet',
+    'programmer une réunion', 'écrire un rapport', 'nettoyer la maison', 'faire du sport',
+    'payer les factures', 'prendre rendez-vous', 'envoyer un email', 'réviser les documents',
+    'préparer la présentation', 'organiser les fichiers', 'mettre à jour le site', 'sauvegarder les données',
+    'réunion équipe', 'rendez-vous médecin', 'faire les courses', 'vidange voiture',
+    'anniversaire', 'réservation restaurant', 'réserver vol', 'réservation hôtel',
+    'estudiar para el examen', 'comprar comestibles', 'llamar al dentista', 'terminar proyecto',
+    'programar reunión', 'escribir informe', 'limpiar casa', 'hacer ejercicio',
+    'pagar facturas', 'hacer cita', 'enviar correo', 'revisar documentos',
+    'preparar presentación', 'organizar archivos', 'actualizar sitio web', 'respaldar datos',
+    'reunión con equipo', 'cita médico', 'hacer compras', 'cambio aceite',
+    'fiesta cumpleaños', 'reserva restaurante', 'reservar vuelo', 'reserva hotel',
+    'buy', 'call', 'send', 'write', 'read', 'study', 'work', 'clean', 'organize', 'schedule',
+    'acheter', 'appeler', 'envoyer', 'écrire', 'lire', 'étudier', 'travailler', 'nettoyer', 'organiser', 'programmer',
+    'comprar', 'llamar', 'enviar', 'escribir', 'leer', 'estudiar', 'trabajar', 'limpiar', 'organizar', 'programar',
+    'appointment', 'meeting', 'document', 'report', 'project', 'email', 'phone', 'computer',
+    'rendez-vous', 'réunion', 'document', 'rapport', 'projet', 'email', 'téléphone', 'ordinateur',
+    'cita', 'reunión', 'documento', 'informe', 'proyecto', 'correo', 'teléfono', 'computadora',
+    'walk the dog', 'take out trash', 'wash dishes', 'do laundry', 'cook dinner', 'make breakfast',
+    'make lunch', 'prepare snacks', 'water plants', 'vacuum floor', 'clean kitchen',
+    'clean bathroom', 'sweep floor', 'mop floor', 'fold laundry', 'iron clothes', 'change bedsheets',
+    'promener le chien', 'sortir les poubelles', 'laver la vaisselle', 'faire la lessive', 'préparer le dîner',
+    'préparer le petit déjeuner', 'arroser les plantes', "passer l'aspirateur", 'nettoyer la cuisine',
+    'nettoyer salle de bain', 'changer draps', 'repasser vêtements',
+    'sacar la basura', 'lavar los platos', 'hacer la colada', 'cocinar la cena', 'preparar desayuno',
+    'regar las plantas', 'pasar la aspiradora', 'limpiar cocina', 'limpiar baño', 'cambiar sábanas',
+    'submit report', 'join meeting', 'update spreadsheet', 'review code', 'deploy app', 'fix bug',
+    'send invoice', 'prepare budget', 'write proposal', 'check emails', 'attend training',
+    'team presentation', 'debug program', 'analyze data', 'update CRM', 'customer call',
+    'soumettre rapport', 'participer réunion', 'mettre à jour tableau', 'corriger bug', 'envoyer facture',
+    'préparer budget', 'écrire proposition', 'vérifier emails', 'formation', 'présentation équipe',
+    'entregar informe', 'unirse a reunión', 'actualizar hoja de cálculo', 'corregir error', 'enviar factura',
+    'preparar presupuesto', 'escribir propuesta', 'revisar correos', 'presentación equipo',
+    'go to gym', 'run 5km', 'yoga session', 'meditate', 'doctor checkup', 'dentist visit',
+    'drink water', 'track calories', 'take medicine', 'health insurance renewal', 'stretching exercises',
+    'walk outside', 'go for a run', 'do pushups', 'cycling session',
+    'aller à la salle', 'courir 5km', 'séance yoga', 'méditer', 'consultation médecin',
+    'visite dentiste', "boire de l'eau", 'prendre médicaments', 'renouveler assurance santé',
+    'marche dehors', 'faire des pompes', 'séance vélo',
+    'ir al gimnasio', 'correr 5km', 'sesión de yoga', 'meditar', 'cita médica',
+    'visita dentista', 'beber agua', 'tomar medicina', 'renovar seguro médico',
+    'caminar afuera', 'hacer flexiones', 'sesión de ciclismo',
+    'buy clothes', 'order food', 'pay rent', 'transfer money', 'withdraw cash', 'shop online',
+    'renew subscription', 'check bank account', 'buy gift', 'refill groceries',
+    'pay electricity bill', 'pay water bill', 'pay internet bill', 'pay phone bill',
+    'acheter vêtements', 'commander repas', 'payer loyer', 'transférer argent',
+    'retirer argent', 'faire achats en ligne', 'renouveler abonnement', 'vérifier compte bancaire',
+    'acheter cadeau', 'remplir courses', 'payer facture électricité', 'payer facture eau',
+    'comprar ropa', 'pedir comida', 'pagar alquiler', 'transferir dinero',
+    'retirar dinero', 'comprar en línea', 'renovar suscripción', 'revisar cuenta bancaria',
+    'comprar regalo', 'reponer compras', 'pagar factura de luz', 'pagar factura de agua',
+    'book taxi', 'buy train ticket', 'pack luggage', 'renew passport', 'fuel car',
+    'pick up package', 'go to post office', 'check flights', 'hotel check-in', 'return books',
+    'library visit', 'register for class', 'print documents', 'go to bank',
+    'réserver taxi', 'acheter billet train', 'préparer valise', 'renouveler passeport',
+    'faire le plein', 'récupérer colis', 'aller à la poste', 'vérifier vols', 'enregistrement hôtel',
+    'visite bibliothèque', 'imprimer documents', 'aller à la banque',
+    'reservar taxi', 'comprar billete tren', 'hacer maleta', 'renovar pasaporte',
+    'llenar tanque', 'recoger paquete', 'ir a correos', 'revisar vuelos', 'check-in hotel',
+    'visitar biblioteca', 'imprimir documentos', 'ir al banco',
+    'call mom', 'visit grandma', 'buy birthday gift', 'dinner with friends', 'plan trip',
+    'watch movie', 'read book', 'family lunch', 'go for coffee', 'attend wedding',
+    'attend party', 'play video games', 'listen to music', 'walk in park',
+    'appeler maman', 'visiter grand-mère', 'acheter cadeau anniversaire', 'dîner avec amis',
+    'planifier voyage', 'regarder film', 'lire livre', 'déjeuner en famille', 'prendre un café',
+    'aller au mariage', 'aller à la fête', 'jouer jeux vidéo', 'écouter musique', 'se promener parc',
+    'llamar a mamá', 'visitar abuela', 'comprar regalo cumpleaños', 'cenar con amigos',
+    'planear viaje', 'ver película', 'leer libro', 'almuerzo familiar', 'tomar café',
+    'asistir boda', 'asistir fiesta', 'jugar videojuegos', 'escuchar música', 'pasear en parque'
+  ];
 
   const getSuggestions = (value: string): string[] => {
     const inputValue = value.trim().toLowerCase();
@@ -189,14 +425,13 @@ const AutocompleteInput: React.FC<{
         phrase.toLowerCase().startsWith(inputValue)
       )
       .sort((a, b) => {
-        // Prioritize exact matches and beginnings
         const aStarts = a.toLowerCase().startsWith(inputValue);
         const bStarts = b.toLowerCase().startsWith(inputValue);
         if (aStarts && !bStarts) return -1;
         if (!aStarts && bStarts) return 1;
-        return a.length - b.length; // Shorter phrases first
+        return a.length - b.length;
       })
-      .slice(0, 8); // Limit to 8 suggestions
+      .slice(0, 8);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -242,7 +477,6 @@ const AutocompleteInput: React.FC<{
     }
   };
 
-  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -279,7 +513,6 @@ const AutocompleteInput: React.FC<{
           autoComplete="off"
         />
         
-        {/* Voice Recording Button */}
         <button
           type="button"
           onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
@@ -301,7 +534,6 @@ const AutocompleteInput: React.FC<{
           )}
         </button>
         
-        {/* Recording Status */}
         {isListening && (
           <div className="absolute -bottom-6 left-0 text-xs text-blue-600 dark:text-blue-400 animate-pulse">
             🎤 Listening...
@@ -371,15 +603,6 @@ const ModalCreateTask: React.FC<{
   const directories = useAppSelector((state) => state.tasks.directories);
 
   const today: Date = new Date();
-  let day: number = today.getDate();
-  let month: number = today.getMonth() + 1;
-  if (day < 10) {
-    day = +("0" + day);
-  }
-  if (month < 10) {
-    month = +("0" + month);
-  }
-
   const todayDate: string = today.toISOString().split("T")[0];
   const maxDate: string =
     today.getFullYear() + 1 + "-" + (today.getMonth() + 1) + "-" + today.getDate();
@@ -446,24 +669,18 @@ const ModalCreateTask: React.FC<{
         </label>
         <label>
           Date
-          <input
-            type="date"
-            className="w-full"
+          <CustomDatePicker
             value={date}
-            required
-            onChange={({ target }) => setDate(target.value)}
+            onChange={setDate}
             min={todayDate}
             max={maxDate}
           />
         </label>
         <label>
           Time (optional)
-          <input
-            type="time"
-            className="w-full"
+          <CustomTimePicker
             value={time}
-            onChange={({ target }) => setTime(target.value)}
-            placeholder="Set reminder time"
+            onChange={setTime}
           />
           {time && (
             <small className="text-sm text-slate-600 dark:text-slate-400">
