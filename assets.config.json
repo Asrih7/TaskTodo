@@ -1,0 +1,9 @@
+{
+  "android": {
+    "splash": {
+      "src": "resources/splash.png",
+      "backgroundColor": "#0066CC",
+      "padding": 600
+    }
+  }
+}

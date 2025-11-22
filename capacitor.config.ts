@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.app.taskstodo',
-  appName: 'tasks-todo',
+  appName: 'Tasks Todo',
   webDir: 'build',
   plugins: {
     SplashScreen: {
