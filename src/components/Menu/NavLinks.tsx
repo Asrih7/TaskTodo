@@ -49,7 +49,7 @@ const NavLinks: React.FC<NavLinksProps> = ({ classActive, onClick }) => {
           <li key={link.path}>
             <NavLink
               to={link.path}
-              className={`px-4 py-2 w-full block transition hover:text-rose-600 dark:hover:text-slate-200 ${
+              className={`px-4 py-2 w-full block transition hover:text-white dark:hover:text-slate-200 ${
                 currentPath === link.path ? classActive : ""
               }`}
               onClick={handleClick}

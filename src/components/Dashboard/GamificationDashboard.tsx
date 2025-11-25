@@ -2,12 +2,8 @@ import React from "react";
 import XPBar from "../Gamification/XPBar";
 import StreakCounter from "../Gamification/StreakCounter";
 import BadgeDisplay from "../Gamification/BadgeDisplay";
-import MoodTracker from "../Mood/MoodTracker";
-import VoiceInput from "../Voice/VoiceInput";
 import AnalyticsDashboard from "../Analytics/AnalyticsDashboard";
 import FocusMode from "../Focus/FocusMode";
-import SmartTaskInput from "../SmartInput/SmartTaskInput";
-import ThemeSelector from "../Theme/ThemeSelector";
 import DailyQuote from "../Motivational/DailyQuote";
 
 const GamificationDashboard: React.FC = () => {

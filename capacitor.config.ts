@@ -6,12 +6,15 @@ const config: CapacitorConfig = {
   webDir: 'build',
   plugins: {
     SplashScreen: {
-      launchShowDuration: 3000, // Duration in milliseconds (3 seconds)
+      launchShowDuration: 2000, // Duration in milliseconds (2 seconds)
       launchAutoHide: true, // Automatically hide the splash screen after the duration
-      backgroundColor: '#ffffff', // Background color of the splash screen
+      launchFadeOutDuration: 500, // Fade out animation duration
+      backgroundColor: '#f8fafc', // Light gray background color
       androidSplashResourceName: 'splash', // Name of the splash screen resource
-      androidScaleType: 'CENTER_INSIDE', // Scale type for the splash screen image
-      showSpinner: false, // Show a loading spinner (optional)
+      androidScaleType: 'CENTER_CROP', // Scale type for better full-screen coverage
+      showSpinner: false, // No loading spinner
+      splashFullScreen: true, // Full screen splash (no status bar)
+      splashImmersive: true, // Immersive mode (hides navigation bar too)
     },
   },
 };

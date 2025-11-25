@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useAppSelector } from "../../store/hooks";
-import { Task } from "../../interfaces";
 
 const FocusMode: React.FC = () => {
   const tasks = useAppSelector(state => state.tasks.tasks);

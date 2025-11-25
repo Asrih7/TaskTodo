@@ -75,7 +75,7 @@ const CustomDatePicker: React.FC<{
         onClick={() => handleDateSelect(day)}
         className={`p-2 text-center rounded-lg transition-colors ${
           isSelected 
-            ? 'bg-[#646cffaa] text-white font-bold' 
+            ? 'bg-[#2563eb] text-white font-bold' 
             : isToday
             ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
             : 'hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -155,7 +155,7 @@ const CustomDatePicker: React.FC<{
                 onChange(today);
                 setShowPicker(false);
               }}
-              className="flex-1 px-4 py-2 bg-[#646cffaa] text-white rounded hover:bg-[#646cff]"
+              className="flex-1 px-4 py-2 bg-[#2563eb] text-white rounded hover:bg-[#646cff]"
             >
               Today
             </button>
@@ -263,7 +263,7 @@ const CustomTimePicker: React.FC<{
             <button
               type="button"
               onClick={handleConfirm}
-              className="flex-1 px-4 py-2 bg-[#646cffaa] text-white rounded hover:bg-[#646cff]"
+              className="flex-1 px-4 py-2 bg-[#2563eb] text-white rounded hover:bg-[#646cff]"
             >
               Confirm
             </button>
@@ -655,9 +655,9 @@ const ModalCreateTask: React.FC<{
     }
   };
 
-  return (
+   return (
     <Modal onClose={onClose} title={nameForm}>
-      <form className="flex flex-col stylesInputsField" onSubmit={addNewTaskHandler}>
+      <form className="flex flex-col stylesInputsField max-h-[70vh] overflow-y-auto pr-2" onSubmit={addNewTaskHandler}>
         <label>
           Title
           <AutocompleteInput
