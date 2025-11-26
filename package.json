@@ -13,6 +13,7 @@
   ],
   "homepage": ".",
   "dependencies": {
+    "@capacitor-community/speech-recognition": "^7.0.1",
     "@capacitor/android": "^7.4.4",
     "@capacitor/core": "^7.4.4",
     "@capacitor/local-notifications": "^7.0.3",

@@ -157,7 +157,7 @@ const CustomDatePicker: React.FC<{
               }}
               className="flex-1 px-4 py-2 bg-[#2563eb] text-white rounded hover:bg-[#646cff]"
             >
-              Today
+              Confirm
             </button>
           </div>
         </div>
@@ -274,7 +274,91 @@ const CustomTimePicker: React.FC<{
   );
 };
 
-// Multilingual Autocomplete Input Component with Voice Support
+const useSpeechRecognition = () => {
+  const [isListening, setIsListening] = useState(false);
+  const [isSupported, setIsSupported] = useState(true);
+
+  useEffect(() => {
+    // Check if Android bridge is available
+    const isAndroidSpeechAvailable = typeof (window as any).AndroidSpeech !== 'undefined';
+    console.log('🔊 Android Speech available:', isAndroidSpeechAvailable);
+    setIsSupported(isAndroidSpeechAvailable);
+  }, []);
+
+  const startListening = (): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      console.log('🎤 Starting Android native speech recognition...');
+      
+      // Check if Android bridge is available
+      if (typeof (window as any).AndroidSpeech === 'undefined') {
+        reject(new Error('Speech recognition not available on this device'));
+        return;
+      }
+
+      setIsListening(true);
+
+      // Set up one-time event listener for the result
+      const handleResult = (event: any) => {
+        console.log('🎯 Received speech result:', event.detail);
+        window.removeEventListener('speechResult', handleResult);
+        window.removeEventListener('speechError', handleError);
+        
+        setIsListening(false);
+        
+        if (event.detail && event.detail.trim()) {
+          resolve(event.detail.trim());
+        } else {
+          reject(new Error('No speech detected. Please try again.'));
+        }
+      };
+
+      const handleError = (event: any) => {
+        console.error('❌ Speech recognition error:', event.detail);
+        window.removeEventListener('speechResult', handleResult);
+        window.removeEventListener('speechError', handleError);
+        
+        setIsListening(false);
+        reject(new Error(event.detail || 'Speech recognition failed'));
+      };
+
+      window.addEventListener('speechResult', handleResult);
+      window.addEventListener('speechError', handleError);
+
+      // Start Android native speech recognition
+      try {
+        (window as any).AndroidSpeech.startSpeechRecognition();
+        
+        // Timeout after 15 seconds
+        setTimeout(() => {
+          window.removeEventListener('speechResult', handleResult);
+          window.removeEventListener('speechError', handleError);
+          setIsListening(false);
+          reject(new Error('Speech recognition timeout'));
+        }, 15000);
+        
+      } catch (error) {
+        window.removeEventListener('speechResult', handleResult);
+        window.removeEventListener('speechError', handleError);
+        setIsListening(false);
+        reject(new Error('Failed to start speech recognition'));
+      }
+    });
+  };
+
+  const stopListening = () => {
+    console.log('⏹️ Stopping speech recognition');
+    setIsListening(false);
+  };
+
+  return { 
+    startListening, 
+    stopListening, 
+    isListening, 
+    isSupported,
+    permissionGranted: true 
+  };
+};
+// REAL-TIME Autocomplete Input with Live Speech-to-Text
 const AutocompleteInput: React.FC<{
   title: string;
   setTitle: (value: string) => void;
@@ -284,58 +368,58 @@ const AutocompleteInput: React.FC<{
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSuggestion, setActiveSuggestion] = useState(0);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isListening, setIsListening] = useState(false);
+  const [speechFeedback, setSpeechFeedback] = useState('');
+  const [isRealTimeListening, setIsRealTimeListening] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<any>(null);
+  
+const { startListening, stopListening, isListening, isSupported } = useSpeechRecognition();
 
-  // Initialize speech recognition
-  useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
+const startVoiceRecording = async () => {
+  console.log('🎤 Starting voice recording...');
+  
+  if (!isSupported) {
+    alert('Speech recognition is not supported on this device.');
+    return;
+  }
 
-      recognitionRef.current.onstart = () => {
-        setIsListening(true);
-      };
+  if (isListening) {
+    stopListening();
+    return;
+  }
 
-      recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setTitle(title + ' ' + transcript);
-        setIsListening(false);
-        setIsRecording(false);
-      };
-
-      recognitionRef.current.onerror = () => {
-        setIsListening(false);
-        setIsRecording(false);
-      };
-
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-        setIsRecording(false);
-      };
+  try {
+    setSpeechFeedback('🎤 Listening...');
+    const transcript = await startListening();
+    
+    if (transcript && transcript.trim()) {
+      setTitle(transcript.trim());
+      setSpeechFeedback('✅ Speech recognized!');
+      console.log('✅ Speech-to-text successful:', transcript);
+      
+      // Auto-clear feedback after 2 seconds
+      setTimeout(() => setSpeechFeedback(''), 2000);
+    } else {
+      setSpeechFeedback('❌ No speech detected');
+      setTimeout(() => setSpeechFeedback(''), 2000);
     }
-  }, [title, setTitle]);
+  } catch (error: any) {
+    console.error('❌ Speech recognition failed:', error);
+    setSpeechFeedback('❌ ' + error.message);
+    setTimeout(() => setSpeechFeedback(''), 3000);
+  }
+};
 
-  const startVoiceRecording = () => {
-    if (recognitionRef.current) {
-      setIsRecording(true);
-      recognitionRef.current.start();
-    }
-  };
+
 
   const stopVoiceRecording = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsRecording(false);
-      setIsListening(false);
-    }
+    console.log('⏹️ Stopping real-time speech');
+    stopListening();
+    setIsRealTimeListening(false);
+    setSpeechFeedback('');
   };
+
+
 
   const dictionary = [
     'study for the test', 'buy groceries', 'call dentist', 'finish project',
@@ -513,33 +597,52 @@ const AutocompleteInput: React.FC<{
           autoComplete="off"
         />
         
-        <button
-          type="button"
-          onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
-          className={`absolute right-2 p-2 rounded-full transition-colors ${
-            isRecording 
-              ? 'bg-red-500 text-white animate-pulse' 
-              : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
-          }`}
-          title={isRecording ? 'Stop recording' : 'Start voice recording'}
-        >
-          {isRecording ? (
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <rect x="6" y="6" width="8" height="8" rx="1"/>
-            </svg>
-          ) : (
+        {isSupported ? (
+          <button
+            type="button"
+            onClick={startVoiceRecording}
+            className={`absolute right-2 p-2 rounded-full transition-colors ${
+              isListening 
+                ? 'bg-red-500 text-white animate-pulse' 
+                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
+            }`}
+            title={isListening ? 'Stop recording' : 'Start real-time voice input'}
+          >
+            {isListening ? (
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <rect x="6" y="6" width="8" height="8" rx="1"/>
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd"/>
+              </svg>
+            )}
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="absolute right-2 p-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed"
+            title="Voice input not supported"
+          >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd"/>
             </svg>
-          )}
-        </button>
-        
-        {isListening && (
-          <div className="absolute -bottom-6 left-0 text-xs text-blue-600 dark:text-blue-400 animate-pulse">
-            🎤 Listening...
-          </div>
+          </button>
         )}
       </div>
+      
+      {/* Real-time speech feedback */}
+      {speechFeedback && (
+        <div className={`absolute -bottom-6 left-0 text-xs font-medium ${
+          speechFeedback.includes('✅') ? 'text-green-600 dark:text-green-400' : 
+          speechFeedback.includes('❌') ? 'text-red-600 dark:text-red-400' : 
+          'text-blue-600 dark:text-blue-400'
+        }`}>
+          {speechFeedback}
+          {isListening && " 🔴 Recording..."}
+        </div>
+      )}
       
       {showSuggestions && suggestions.length > 0 && (
         <div
@@ -655,7 +758,7 @@ const ModalCreateTask: React.FC<{
     }
   };
 
-   return (
+  return (
     <Modal onClose={onClose} title={nameForm}>
       <form className="flex flex-col stylesInputsField max-h-[70vh] overflow-y-auto pr-2" onSubmit={addNewTaskHandler}>
         <label>
@@ -747,7 +850,7 @@ const ModalCreateTask: React.FC<{
         <button type="submit" className="btn mt-5">
           {nameForm}
         </button>
-      </form>
+      </form> 
     </Modal>
   );
 };

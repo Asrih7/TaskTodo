@@ -4,6 +4,16 @@ const config: CapacitorConfig = {
   appId: 'com.app.taskstodo',
   appName: 'Tasks Todo',
   webDir: 'build',
+  server: {
+    androidScheme: 'https',
+    // This is important for microphone access
+    cleartext: true
+  },
+  android: {
+    allowMixedContent: true,
+    // Enable web features
+    webContentsDebuggingEnabled: true
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000, // Duration in milliseconds (2 seconds)
@@ -16,6 +26,9 @@ const config: CapacitorConfig = {
       splashFullScreen: true, // Full screen splash (no status bar)
       splashImmersive: true, // Immersive mode (hides navigation bar too)
     },
+    CapacitorHttp: {
+      enabled: true
+    }
   },
 };
 

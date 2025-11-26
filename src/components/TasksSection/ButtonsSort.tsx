@@ -1,6 +1,5 @@
 import React from "react";
 import { ReactComponent as IconView1 } from "../../assets/view-1.svg";
-import { ReactComponent as IconView2 } from "../../assets/view-2.svg";
 
 const sortValues = [
   { value: "order-added", title: "Order added" },
@@ -11,18 +10,13 @@ const sortValues = [
 ];
 
 const ButtonsSort: React.FC<{
-  isListInView1: boolean;
   sortedBy: string;
   setSortedBy: (option: string) => void;
-  setIsListInView1: (status: boolean) => void;
-}> = ({ isListInView1, setIsListInView1, sortedBy, setSortedBy }) => {
+}> = ({ sortedBy, setSortedBy }) => {
   return (
     <div className="flex children-styles">
-      <button onClick={() => setIsListInView1(true)} title="view in list">
-        <IconView1 className={isListInView1 ? "text-blue-600" : ""} />
-      </button>
-      <button onClick={() => setIsListInView1(false)} title="view in grid">
-        <IconView2 className={!isListInView1 ? "text-blue-600" : ""} />
+      <button title="view in list">
+        <IconView1 className="text-blue-600" />
       </button>
       <select
         className="ml-auto inputStyles"
