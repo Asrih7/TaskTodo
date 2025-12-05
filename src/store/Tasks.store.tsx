@@ -8,6 +8,25 @@ import {
 import { Task } from "../interfaces";
 import { notificationService } from "../services/notificationService";
 
+// Initialize app storage and detect fresh installs
+const initializeAppStorage = (): void => {
+  const isFreshInstall = !localStorage.getItem("app_initialized");
+  
+  if (isFreshInstall) {
+    // Clear ALL existing data - this is a fresh install
+    localStorage.clear();
+    
+    // Set initialization markers
+    localStorage.setItem("app_initialized", "true");
+    localStorage.setItem("install_timestamp", Date.now().toString());
+    
+    console.log("Fresh install detected - storage cleared");
+  }
+};
+
+// Call initialization on import
+initializeAppStorage();
+
 const getSavedDirectories = (): string[] => {
   let dirList: string[] = [];
   

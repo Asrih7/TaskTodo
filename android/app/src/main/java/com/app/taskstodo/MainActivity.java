@@ -10,6 +10,7 @@ import android.webkit.WebView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.Plugin;
 
 import java.util.ArrayList;
 
@@ -21,16 +22,17 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        // Request microphone permission
+    getWindow().setBackgroundDrawableResource(android.R.color.white);
+
         requestMicrophonePermission();
     }
+
+
 
     @Override
     public void onResume() {
         super.onResume();
         
-        // Add JavaScript interface when app resumes
         if (this.bridge != null && this.bridge.getWebView() != null) {
             webView = this.bridge.getWebView();
             webView.addJavascriptInterface(new SpeechRecognitionInterface(), "AndroidSpeech");
@@ -46,7 +48,6 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
-    // JavaScript interface for speech recognition
     public class SpeechRecognitionInterface {
         @JavascriptInterface
         public void startSpeechRecognition() {
@@ -54,7 +55,6 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void run() {
                     try {
-                        // Start Android's built-in speech recognition
                         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
                         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, 
                                       RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -64,7 +64,6 @@ public class MainActivity extends BridgeActivity {
                         
                         startActivityForResult(intent, SPEECH_REQUEST_CODE);
                     } catch (Exception e) {
-                        // Send error back to WebView
                         if (webView != null) {
                             webView.evaluateJavascript(
                                 "javascript:window.dispatchEvent(new CustomEvent('speechError', { detail: 'Speech recognition not available' }))", 
@@ -77,21 +76,18 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
-    // Handle speech recognition result
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         
         if (requestCode == SPEECH_REQUEST_CODE) {
             if (resultCode == RESULT_OK && data != null) {
-                // Get the speech results
                 ArrayList<String> results = data.getStringArrayListExtra(
                     RecognizerIntent.EXTRA_RESULTS
                 );
                 
                 if (results != null && !results.isEmpty()) {
                     String spokenText = results.get(0);
-                    // Properly escape the string for JavaScript
                     String escapedText = spokenText
                         .replace("\\", "\\\\")
                         .replace("'", "\\'")
@@ -99,7 +95,6 @@ public class MainActivity extends BridgeActivity {
                         .replace("\n", "\\n")
                         .replace("\r", "\\r");
                     
-                    // Send result back to WebView
                     final String javascript = "javascript:window.dispatchEvent(new CustomEvent('speechResult', { detail: '" 
                                       + escapedText + "' }))";
                     
@@ -113,7 +108,6 @@ public class MainActivity extends BridgeActivity {
                     });
                 }
             } else {
-                // No speech detected or user cancelled
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
